@@ -162,7 +162,7 @@ plots->cd(2);
 h_lE1_pt->Draw();
 h_tE1_pt->Draw("same");
 plots->cd(4);
-TH1F *h4 = (TH1F*)h_tE1_pt->Clone("h3");
+TH1F *h4 = (TH1F*)h_tE1_pt->Clone("h4");
 h4->Divide(h_lE1_pt);
 h4->Draw("e");
 
