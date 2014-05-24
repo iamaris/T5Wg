@@ -62,9 +62,9 @@ void fakerate(TString const& _input)
   TH1F* h_N_tG = new TH1F("h_N_tG", "tight G Pt", 10, 0., 10.);
   TH1F* h_N_lE = new TH1F("h_N_lE", "Loose e Pt", 10, 0., 10.);
   TH1F* h_N_tE = new TH1F("h_N_tE", "Tight e Pt", 10, 0., 10.);
-  TH1F* h_all_lE_pt = new TH1F("h_all_lE_pt", "Loose e Pt", 10, 0., 10.);
-  TH1F* h_all_tE_pt = new TH1F("h_all_tE_pt", "Tight e Pt", 10, 0., 10.);
-  TH1F* h_all_tG_pt = new TH1F("h_all_tG_pt", "Tight G Pt", 10, 0., 10.);
+  TH1F* h_all_lE_pt = new TH1F("h_all_lE_pt", "Loose e Pt", 40, 0., 400.);
+  TH1F* h_all_tE_pt = new TH1F("h_all_tE_pt", "Tight e Pt", 40, 0., 400.);
+  TH1F* h_all_tG_pt = new TH1F("h_all_tG_pt", "Tight G Pt", 40, 0., 400.);
   TH1F* h_lE_pt = new TH1F("h_lE_pt", "Loose e Pt", 30, 0., 300.);
   TH1F* h_tE_pt = new TH1F("h_tE_pt", "Tight e Pt", 30, 0., 300.);
   TH1F* h_fE_pt = new TH1F("h_fE_pt", "Fail-tight e Pt", 30, 0., 300.);
@@ -106,7 +106,6 @@ void fakerate(TString const& _input)
     h_N_lE->Fill(lE.size());
     h_N_tE->Fill(tE.size());
 
-
     for(unsigned k(0);k<rp.size;k++) {    
       if (!p.isLoose[k]) continue;
       lG.insert(k);
@@ -114,7 +113,6 @@ void fakerate(TString const& _input)
     }
     h_N_tG->Fill(lG.size());
  
-
     //consider event with only 1 loose electron
     if(lE.size()!=1) continue;
     it = lE.begin();
@@ -178,7 +176,7 @@ hlist.Add(h_tE1_pt);
 hlist.Add(h_fE1_pt);
 
 
-TFile fout("fakerate.root", "recreate");
+TFile fout("fakeratePhotonHad.root", "recreate");
 hlist.Write();
 fout.Close();
 

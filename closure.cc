@@ -13,31 +13,17 @@ const double PI = 4.0*atan(1.0);
 #include "TH1.h"
 #include "TH2.h"
 
-void closure()
+void closure(TString const& _input)
 {
+  std::cout<<_input<<std::endl;
   TChain eventVars("eventVars");//define eventVars tree
-  //eventVars.Add("/export/cmss/acalamba/photonhad/*.root/eventVars");
-  //eventVars.Add("/export/cmss/acalamba/ttbarjetgamma/*.root/eventVars");
-  //eventVars.Add("/export/cmss/acalamba/QCD/*9.root/eventVars");
-  //eventVars.Add("./QCD/QCD*1.root/eventVars");
-  eventVars.Add("./ttbarjgamma/ttbar*.root/eventVars");
-  //eventVars.Add("./Wg/*.root/eventVars");
+  eventVars.Add("./"+_input+".root/eventVars");
 
-  TChain selectedObjects("selectedObjects");  //define eventVars tree
-  //selectedObjects.Add("/export/cmss/acalamba/photonhad/*.root/selectedObjects");
-  //selectedObjects.Add("/export/cmss/acalamba/ttbarjetgamma/*.root/selectedObjects");
-  //selectedObjects.Add("/export/cmss/acalamba/QCD/*9.root/selectedObjects");
-  //selectedObjects.Add("./QCD/QCD*1.root/selectedObjects");
-  selectedObjects.Add("./ttbarjgamma/ttbar*.root/selectedObjects");
-  //selectedObjects.Add("./Wg/*.root/selectedObjects");
+  TChain selectedObjects("selectedObjects");  //define eventVars tree	
+  selectedObjects.Add("./"+_input+".root/selectedObjects");
 
   TChain allObjects("allObjects");  //define eventVars tree
-  //allObjects.Add("/export/cmss/acalamba/photonhad/*.root/allObjects");
-  //allObjects.Add("/export/cmss/acalamba/ttbarjetgamma/*.root/allObjects");
-  //allObjects.Add("/export/cmss/acalamba/QCD/*9.root/allObjects");
-  //allObjects.Add("./QCD/QCD*1.root/allObjects");
-  allObjects.Add("./ttbarjgamma/ttbar*.root/allObjects");
-  //allObjects.Add("./Wg/*.root/allObjects");
+  allObjects.Add("./"+_input+".root/allObjects");
 
   allObjects.AddFriend("selectedObjects");
   allObjects.AddFriend("eventVars");
@@ -71,6 +57,7 @@ void closure()
  
   gp.setAddress(eventVars);
 
+  TH1F* h_lE_N = new TH1F("h_lE_N", "# of loose e", 6, 0., 6.);
 
   TH1F* h_lE_pt = new TH1F("h_lE_pt", "Loose e Pt", 30, 0., 300.);
   TH1F* h_tE_pt = new TH1F("h_tE_pt", "Tight e Pt", 30, 0., 300.);
@@ -84,16 +71,34 @@ void closure()
   h_trueE_pt->Sumw2();
   h_fakeE_pt->Sumw2();
 
-  TH1F* h_fake = new TH1F("h_fake", "fake", 30, 0., 300.);
-  TH1F* h_true = new TH1F("h_true", "true", 30, 0., 300.);
+  TH1F* h_fake = new TH1F("h_fake", "e_pt: pred fake", 30, 0., 300.);
+  TH1F* h_true = new TH1F("h_true", "e_pt: pred true", 30, 0., 300.);
   h_true->Sumw2();
   h_fake->Sumw2();
+
+  TH1F* h_mt_true   = new TH1F("h_mt_true", "MT:True", 50, 0., 500.);
+  TH1F* h_mt_fake = new TH1F("h_mt_fake", "MT:Fake", 50, 0., 500.);
+  TH1F* h_mt_ptrue   = new TH1F("h_mt_ptrue", "MT:pred True", 50, 0., 500.);
+  TH1F* h_mt_pfake = new TH1F("h_mt_pfake", "MT:pred Fake", 50, 0., 500.);
+  h_mt_true->Sumw2();
+  h_mt_fake->Sumw2();
+  h_mt_ptrue->Sumw2();
+  h_mt_pfake->Sumw2();
+
+  TH1F* h_met_true   = new TH1F("h_met_true", "MET:True", 50, 0., 500.);
+  TH1F* h_met_fake = new TH1F("h_met_fake", "MET:Fake", 50, 0., 500.);
+  TH1F* h_met_ptrue   = new TH1F("h_met_ptrue", "MET:pred True", 50, 0., 500.);
+  TH1F* h_met_pfake = new TH1F("h_met_pfake", "MET:pred Fake", 50, 0., 500.);
+  h_met_true->Sumw2();
+  h_met_fake->Sumw2();
+  h_met_ptrue->Sumw2();
+  h_met_pfake->Sumw2();
 
   unsigned nCnt[20] = {0};
   //loop over events
   long iEntry = 0;
   while(allObjects.GetEntry(iEntry++) != 0){
-    //if(met>20.) continue;
+    //if(met>80.) continue;
     nCnt[0]++;
 
     //if(!hlt0 && !hlt1) continue;
@@ -139,10 +144,11 @@ void closure()
       }
     }
  
+    h_lE_N->Fill(lE.size());
     //consider event with only 1 loose electron
     if(lE.size()!=1) continue;
     it = lE.begin();
-
+    //if(re.pt[*it]<40.) continue;
     h_lE_pt->Fill(re.pt[*it]);
   
     //loop over all gen particles
@@ -163,22 +169,36 @@ void closure()
     //with true electron
     if(TrueElectron>0) {
        h_trueE_pt->Fill(re.pt[*it]);
+       float mt_e = mt(met,metPhi,re.pt[*it],re.phi[*it]);
+       h_mt_true->Fill(mt_e);
+       h_met_true->Fill(met); 
        //viewGenTreeRA3(gen,2.,false);
     }
     
     //fake electron
     if(TrueElectron==0) {
        h_fakeE_pt->Fill(re.pt[*it]);
+       float mt_e = mt(met,metPhi,re.pt[*it],re.phi[*it]);
+       h_mt_fake->Fill(mt_e);
+       h_met_fake->Fill(met); 
     }
 
 
     if(tE.size()==1) {
-        h_tE_pt->Fill(re.pt[*it]);
-        h_true->Fill(re.pt[*it]);
+       h_tE_pt->Fill(re.pt[*it]);
+       h_true->Fill(re.pt[*it]);
+       float mt_e = mt(met,metPhi,re.pt[*it],re.phi[*it]);
+       h_mt_ptrue->Fill(mt_e);
+       h_met_ptrue->Fill(met);
     } else {
-        h_failtE_pt->Fill(re.pt[*it]);//did not pass tight
-        h_fake->Fill(re.pt[*it],fakerateinv(re.pt[*it]));
-        h_true->Fill(re.pt[*it],fakerateinv2(re.pt[*it]));
+       h_failtE_pt->Fill(re.pt[*it]);//did not pass tight
+       h_fake->Fill(re.pt[*it],fakerateinv(re.pt[*it]));
+       h_true->Fill(re.pt[*it],fakerateinv2(re.pt[*it]));
+       float mt_e = mt(met,metPhi,re.pt[*it],re.phi[*it]);
+       h_mt_pfake->Fill(mt_e,fakerateinv(re.pt[*it]));
+       h_mt_ptrue->Fill(mt_e,fakerateinv2(re.pt[*it]));
+       h_met_pfake->Fill(met,fakerateinv(re.pt[*it]));
+       h_met_ptrue->Fill(met,fakerateinv2(re.pt[*it]));
     }
 
 
@@ -193,17 +213,58 @@ std::cout<< "-----------------------------------------------"<<std::endl;
 
 TH1F* pred = new TH1F("pred", "predicted", 30, 0., 300.);
 pred->Add(h_true);
-TCanvas *plot = new TCanvas("plot","fake rate plots",800,800);
-plot->Divide(1,2);
+TCanvas *plot = new TCanvas("plot","fake rate plots",1200,800);
+plot->Divide(3,2);
 plot->cd(1);
 h_trueE_pt->Draw();
 pred->Draw("same");
-plot->cd(2);
+plot->cd(4);
 TH1F* ratio = new TH1F("ratio", "% diff", 30, 0., 300.);
 ratio->Add(h_trueE_pt);
 ratio->Add(pred,-1);
 ratio->Divide(h_trueE_pt);
 ratio->Draw();
+plot->cd(2);
+h_mt_true->Draw();
+h_mt_fake->Draw("same");
+plot->cd(5);
+h_mt_ptrue->Draw();
+h_mt_true->Draw("same");
+plot->cd(3);
+h_met_true->Draw();
+h_met_fake->Draw("same");
+plot->cd(6);
+h_met_ptrue->Draw();
+h_met_true->Draw("same");
+
+
+TCanvas *plots = new TCanvas("plots","fake rate plots",1200,800);
+plots->Divide(3,2);	
+plots->cd(1);
+h_true->Draw();
+h_trueE_pt->Draw("same");
+plots->cd(4);
+TH1F* ratio0 = new TH1F("ratio0", "pred/true", 30, 0., 300.);
+ratio0->Add(h_true);
+ratio0->Divide(h_trueE_pt);
+ratio0->Draw();
+plots->cd(2);
+h_mt_ptrue->Draw();
+h_mt_true->Draw("same");
+plots->cd(5);
+TH1F* ratio1 = new TH1F("ratio1", "pred/true", 50, 0., 500.);
+ratio1->Add(h_mt_ptrue);
+ratio1->Divide(h_mt_true);
+ratio1->Draw();
+plots->cd(3);
+h_met_ptrue->Draw();
+h_met_true->Draw("same");
+plots->cd(6);
+TH1F* ratio2 = new TH1F("ratio2", "pred/true", 50, 0., 500.);
+ratio2->Add(h_met_ptrue);
+ratio2->Divide(h_met_true);
+ratio2->Draw();
+
 
 
 //save histograms inside sampleAnalysis.root
