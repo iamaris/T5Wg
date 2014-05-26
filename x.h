@@ -571,6 +571,7 @@ namespace mini {
     for(unsigned i=0;i<_p.size;i++) {
       if(_p.pt[i]<_pt) continue;
       if(fabs(_p.eta[i])>1.4442) continue;     
+      //if(!(_p.electronVetoBit[i])) continue;
       if(_p.nPixelSeeds[i] > 0) continue;
       if(_p.hOverE[i] > 0.05) continue;
       if(_p.sigmaIetaIeta[i] > 0.012) continue;
@@ -608,7 +609,7 @@ namespace mini {
     std::set<unsigned> loose;
     for(unsigned i=0;i<_p.size;i++) {
       if(_p.pt[i] < _pt) continue;
-      if(_p.eta[i] < 1.4442) continue;
+      if(_p.eta[i] > 1.4442) continue;
       if(_p.iSubdet[i]==0) {
         if(_p.nPixelSeeds[i] > 0) continue;
         if(_p.hOverE[i] > 0.05) continue;
@@ -917,92 +918,99 @@ namespace mini {
   }
 
   std::set<unsigned>
-  LooseElectronFR(electron& _e) {
-    std::set<unsigned> medium;
+  LooseElectronFR(electron& _e, float _pt) {
+    std::set<unsigned> loose;
     for (unsigned i=0;i<_e.size;i++) {
-      if(fabs(_e.eta[i])>1.4442) continue;//instead of if(_e.iSubdet[k]!=0) continue; 
-      //if(_e.iSubdet[i]!=0) continue;
-      if(_e.iSubdet[i]==0) {
-        if(_e.deltaEta[i] > 0.007) continue;
-        if(_e.deltaPhi[i] > 0.15) continue;
-        if(_e.sigmaIetaIeta[i] > 0.01) continue;
-        if(_e.hOverE[i] > 0.12) continue;
-        //if(_e.d0[i] > 0.02) continue;
-        if(_e.dz[i] > 0.2) continue;
-        if(_e.epDiff[i] > 0.05) continue;
-        //if(_e.combRelIso[i] > 0.15) continue;
-        if(_e.combRelIso[i] > 0.6) continue;
-        if(!_e.passConversionVeto[i]) continue;
-        if(_e.vtxFitProb[i] > 0.000001) continue;
-        if(_e.nMissingHits[i] > 1) continue;
-        medium.insert(i);
-      } else if(_e.iSubdet[i]==1){
-        if(_e.deltaEta[i] > 0.009) continue;
-        if(_e.deltaPhi[i] > 0.1) continue;
-        if(_e.sigmaIetaIeta[i] > 0.03) continue;
-        if(_e.hOverE[i] > 0.1) continue;
-        //if(_e.d0[i] > 0.02) continue;
-        if(_e.dz[i] > 0.2) continue;
-        if(_e.epDiff[i] > 0.05) continue;
-        //if(_e.combRelIso[i] > 0.15) continue;
-        if(_e.combRelIso[i] > 0.6) continue;
-        if(!_e.passConversionVeto[i]) continue;
-        if(_e.vtxFitProb[i] > 0.000001) continue;
-        if(_e.nMissingHits[i] > 1) continue;
-        medium.insert(i);
-      }
+      if(fabs(_e.eta[i])>1.4442) continue; 
+      if(_e.pt[i] < _pt) continue;
+      if(_e.deltaEta[i] > 0.007) continue;
+      if(_e.deltaPhi[i] > 0.15) continue;
+      if(_e.sigmaIetaIeta[i] > 0.01) continue;
+      if(_e.hOverE[i] > 0.12) continue;
+      //if(_e.d0[i] > 0.02) continue;
+      if(_e.dz[i] > 0.2) continue;
+      if(_e.epDiff[i] > 0.05) continue;
+      //if(_e.combRelIso[i] > 0.15) continue;
+      if(_e.combRelIso[i] > 0.6) continue;
+      if(!_e.passConversionVeto[i]) continue;
+      if(_e.vtxFitProb[i] > 0.000001) continue;
+      if(_e.nMissingHits[i] > 1) continue;
+      loose.insert(i);
     }
-    return medium;
+    return loose;
   }
 
 
   std::set<unsigned>
-  LooseElectronFR(electron& _e,photon& _p) {
-    std::set<unsigned> loose;
-    std::set<unsigned>::iterator it;
+  TightElectron(electron& _e,float _pt) {
+    std::set<unsigned> tight;
 
     for (unsigned i=0;i<_e.size;i++) {
-      if(_e.iSubdet[i]==0) {
-        if(_e.deltaEta[i] > 0.007) continue;
-        if(_e.deltaPhi[i] > 0.15) continue;
-        if(_e.sigmaIetaIeta[i] > 0.01) continue;
-        if(_e.hOverE[i] > 0.12) continue;
-        //if(_e.d0[i] > 0.02) continue;
-        if(_e.dz[i] > 0.2) continue;
-        if(_e.epDiff[i] > 0.05) continue;
-        //if(_e.combRelIso[i] > 0.15) continue;
-        if(_e.combRelIso[i] > 0.6) continue;
-        if(!_e.passConversionVeto[i]) continue;
-        if(_e.vtxFitProb[i] > 0.000001) continue;
-        if(_e.nMissingHits[i] > 1) continue;
-        loose.insert(i);
-      } else if(_e.iSubdet[i]==1){
-        if(_e.deltaEta[i] > 0.009) continue;
-        if(_e.deltaPhi[i] > 0.1) continue;
-        if(_e.sigmaIetaIeta[i] > 0.03) continue;
-        if(_e.hOverE[i] > 0.1) continue;
-        //if(_e.d0[i] > 0.02) continue;
-        if(_e.dz[i] > 0.2) continue;
-        if(_e.epDiff[i] > 0.05) continue;
-        //if(_e.combRelIso[i] > 0.15) continue;
-        if(_e.combRelIso[i] > 0.6) continue;
-        if(!_e.passConversionVeto[i]) continue;
-        if(_e.vtxFitProb[i] > 0.000001) continue;
-        if(_e.nMissingHits[i] > 1) continue;
-        loose.insert(i);
-      }
+      if(fabs(_e.eta[i]) > 1.4442) continue;
+      if(_e.pt[i] < _pt) continue;
+      if(_e.deltaEta[i] >= 0.004) continue;
+      if(_e.deltaPhi[i] >= 0.03) continue;
+      if(_e.sigmaIetaIeta[i] >= 0.01) continue;
+      if(_e.hOverE[i] >= 0.12) continue;
+      if(_e.d0[i] >= 0.02) continue;
+      if(_e.dz[i] >= 0.1) continue;
+      if(_e.epDiff[i] >= 0.05) continue;
+      if(_e.combRelIso[i] >= 0.10) continue;
+      if(!_e.passConversionVeto[i]) continue;
+      if(_e.vtxFitProb[i] >= 0.000001) continue;
+      if(((int)_e.nMissingHits[i]) > 0) continue;
+      tight.insert(i);
     }
+    return tight; 
+  }
 
-    for (it=loose.begin(); it!=loose.end(); ++it) {
-      for (unsigned k=0;k<_p.size;k++) {
-        if(deltaR(_p.eta[k],_p.phi[k],_e.eta[*it],_e.phi[*it])<0.1) {
-          loose.erase(it);
-          break;
-        }
-      }
+  void
+  PrintPhoton(photon& _p, unsigned i) {
+      std::cout <<
+      (_p.nPixelSeeds[i]) <<","<<
+      (_p.hOverE[i]) <<","<<
+      (_p.sigmaIetaIeta[i]) <<","<<
+      (_p.chargedHadronIso[i]) <<","<<
+      (_p.neutralHadronIso[i]) <<","<<
+      (_p.photonIso[i]) <<std::endl;
+  }
+
+
+  void
+  PrintElectron(electron& re, unsigned i) {
+      std::cout <<
+      re.deltaEta[i]<<","<<
+      re.deltaPhi[i]<<","<<
+      re.sigmaIetaIeta[i]<<","<<
+      re.hOverE[i]<<","<<
+      re.d0[i]<<","<<
+      re.dz[i]<<","<<
+      re.epDiff[i]<<","<<
+      re.combRelIso[i]<<","<<
+      re.passConversionVeto[i]<<","<<
+      re.vtxFitProb[i]<<","<<
+      (int)re.nMissingHits[i]<<","<<
+      re.isTight[i]<<std::endl;
+  }
+
+
+/*
+  std::set<unsigned>
+  TightElectron(electron& _e,float _pt) {
+    std::set<unsigned> tight;
+    for (unsigned i=0;i<_e.size;i++) {
+      if(fabs(_e.eta[i]) > 1.4442) continue;
+      if(_e.pt[i] < _pt) continue;
+      if(!_e.isTight[i]) continue;
+      tight.insert(i);
     }
+    return tight;
+  }
+*/
 
-    return loose;
+  unsigned
+  ShowSize(electron& _e,photon& _p) {
+     return _e.size+_p.size;
   }
 
 
@@ -1010,7 +1018,7 @@ namespace mini {
   FakeElectron(electron& _e,float _pt=0.0) {
     std::set<unsigned> fake;
     for (unsigned i=0;i<_e.size;i++) {
-      if(_e.eta[i] < 1.4442) continue;
+      if(_e.eta[i] > 1.4442) continue;
       if(_e.pt[i] < _pt) continue;
       if(_e.combRelIso[i] > 0.10) continue;
       fake.insert(i);
