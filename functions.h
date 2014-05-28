@@ -3,7 +3,7 @@
 #define functions_h
 #include <math.h>
 #include <set>
-#include "x.h"
+#include "PhysicsObjects.h"
 #include "TChain.h"
 #include "TFile.h"
 #include "TH1F.h"
@@ -19,7 +19,6 @@
 using namespace mini;
 
 namespace functions {
-
 
   float 
   CalculateHT(jet& _j) {
@@ -41,7 +40,7 @@ namespace functions {
   float 
   mt(float _met,float _metPhi,float _lPt,float _lPhi)
   {
-  return sqrt(2.*_met*_lPt*(1-cos(_metPhi-_lPhi)));
+    return sqrt(2.*_met*_lPt*(1-cos(_metPhi-_lPhi)));
   }
 
   std::set<unsigned> 
@@ -60,6 +59,18 @@ namespace functions {
     }
     return loose;
   }
+
+  bool 
+  CheckLoosePhoton(photon& _p, unsigned i) {
+      if(_p.nPixelSeeds[i] > 0) return false;
+      if(_p.hOverE[i] > 0.05) return false;
+      if(_p.sigmaIetaIeta[i] > 0.012) return false;
+      if(_p.chargedHadronIso[i] > 2.6) return false;
+      if(_p.neutralHadronIso[i] > 3.5) return false;
+      if(_p.photonIso[i] > 1.3) return false;
+    return true;
+  }
+
 
   std::set<unsigned> 
   ElectronFakePhoton(photon& _p,float _pt) {
@@ -118,6 +129,21 @@ namespace functions {
     return loose;
   }
 
+  bool 
+  CheckLooseElectronFR(electron& _e, unsigned i) {
+    if(_e.deltaEta[i] > 0.007) return false;
+    if(_e.deltaPhi[i] > 0.15) return false;
+    if(_e.sigmaIetaIeta[i] > 0.01) return false;
+    if(_e.hOverE[i] > 0.12) return false;
+    if(_e.dz[i] > 0.2) return false;
+    if(_e.epDiff[i] > 0.05) return false;
+    if(_e.combRelIso[i] > 0.6) return false;
+    if(!_e.passConversionVeto[i]) return false;
+    if(_e.vtxFitProb[i] > 0.000001) return false;
+    if(_e.nMissingHits[i] > 1) return false;
+    return true;
+  }
+
 
   std::set<unsigned>
   TightElectron(electron& _e,float _pt) {
@@ -140,6 +166,44 @@ namespace functions {
       tight.insert(i);
     }
     return tight; 
+  }
+
+  bool 
+  CheckTightElectron(electron& _e,unsigned i) {
+    if(_e.deltaEta[i] >= 0.004) return false;
+    if(_e.deltaPhi[i] >= 0.03) return false;
+    if(_e.sigmaIetaIeta[i] >= 0.01) return false;
+    if(_e.hOverE[i] >= 0.12) return false;
+    if(_e.d0[i] >= 0.02) return false;
+    if(_e.dz[i] >= 0.1) return false;
+    if(_e.epDiff[i] >= 0.05) return false;
+    if(_e.combRelIso[i] >= 0.10) return false;
+    if(!_e.passConversionVeto[i]) return false;
+    if(_e.vtxFitProb[i] >= 0.000001) return false;
+    if(((int)_e.nMissingHits[i]) > 0) return false;
+    return true;
+  }
+
+
+  std::set<unsigned>
+  ProxyElectron(electron& _e,float _pt) {
+    std::set<unsigned> tight;
+    for (unsigned i=0;i<_e.size;i++) {
+      if(fabs(_e.eta[i]) > 1.4442) continue;
+      if(_e.pt[i] < _pt) continue;
+      if(_e.sigmaIetaIeta[i] >= 0.01) continue;
+      if(_e.hOverE[i] >= 0.12) continue;
+      if(_e.d0[i] >= 0.02) continue;
+      if(_e.dz[i] >= 0.1) continue;
+      if(_e.epDiff[i] >= 0.05) continue;
+      if(_e.combRelIso[i] > 10.) continue;
+      if(!_e.passConversionVeto[i]) continue;
+      if(_e.vtxFitProb[i] >= 0.000001) continue;
+      if(((int)_e.nMissingHits[i]) > 0) continue;
+      if(_e.deltaEta[i] < 0.004 && _e.deltaPhi[i] < 0.03) continue;
+      tight.insert(i);
+    }
+    return tight;
   }
 
   void
@@ -195,9 +259,9 @@ namespace functions {
   LooseFailTightElectron(electron& _e, float _pt) {
     std::set<unsigned> loose;
     for (unsigned i=0;i<_e.size;i++) {
+      std::cout<<"CHECK ME, I'M WRONG!"<<std::endl;
       if(fabs(_e.eta[i])>1.4442) continue;
       if(_e.pt[i]<_pt) continue;
-      if(_e.isTight[i]) continue;
       if((_e.deltaEta[i] > 0.007) && (_e.deltaEta[i] < 0.004)) continue;
       if((_e.deltaPhi[i] > 0.15) && (_e.deltaPhi[i] < 0.03)) continue;
       if(_e.sigmaIetaIeta[i] > 0.01) continue;
@@ -208,10 +272,22 @@ namespace functions {
       if((_e.combRelIso[i] > 0.6)&&(_e.combRelIso[i] < 0.1)) continue;
       if(!_e.passConversionVeto[i]) continue;
       if(_e.vtxFitProb[i] > 0.000001) continue;
-      if((_e.nMissingHits[i] > 1) && (_e.nMissingHits[i] < 1)) continue;
+      if((_e.nMissingHits[i] != 1)) continue;
       loose.insert(i);
     }
     return loose;
+  }
+
+
+  bool 
+  CheckFailTight(electron const & _e, unsigned i) {
+    if(_e.deltaEta[i] < 0.004) return false;
+    if(_e.deltaPhi[i] < 0.03) return false;
+    if(_e.d0[i] < 0.02) return false;
+    if(_e.dz[i] < 0.1) return false;
+    if(_e.combRelIso[i] < 0.1) return false;
+    if(_e.nMissingHits[i] < 1) return false;
+    return true;
   }
 
   float weight(float a) {   
